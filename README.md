@@ -1,6 +1,6 @@
 # d3qn_pytorch
 D3QN implementation using pytorch
 
-A simple Dueling Double Q Learning network in pytorch playing Lunar Lander. 
+A simple Dueling Double Q Learning network in pytorch playing Lunar Lander, should work with any Box2d game. 
 
-Results are questionable which leads me to believe there is a bug somewhere, so I will find it
+The environment is solved, the results seem a bit inconsistent
