@@ -12,7 +12,7 @@ class ReplayBuffer():
 
         self.state_memory = np.zeros((self.mem_size, *input_shape), dtype = np.float32)
         self.new_state_memory = np.zeros((self.mem_size, *input_shape), dtype = np.float32)
-        self.action_memory = np.zeros(self.mem_size, dtype = np.int32)
+        self.action_memory = np.zeros(self.mem_size, dtype = np.int64)
         self.reward_memory = np.zeros(self.mem_size, dtype = np.float32)
         self.terminal_memory = np.zeros(self.mem_size, dtype = np.bool)
 
@@ -78,7 +78,7 @@ class DuelingDeepQNet(nn.Module):
 class Agent:
     def __init__(self, gamma, n_actions, epsilon, batch_size,
                  input_dims, epsilon_decay = 1e-8, eps_min = 0.01,
-                 mem_size = 1000000, fc1_dims = 128, fc2_dims = 128, replace = 1000):
+                 mem_size = 1000000, fc1_dims = 128, fc2_dims = 128, replace = 100):
         self.action_space = [i for i in range(n_actions)]
         self.gamma = gamma
         self.epsilon = epsilon
@@ -119,19 +119,25 @@ class Agent:
 
         states, actions, rewards, states_, dones = self.memory.sample(self.batch_size)
 
+        states = torch.tensor(states).to(device)
+        rewards = torch.tensor(rewards).to(device)
+        dones = torch.tensor(dones).to(device)
+        actions = torch.tensor(actions).to(device)
+        states_ = torch.tensor(states_).to(device)
+
         indices = np.arange(self.batch_size)
 
-        q_pred = self.q_eval(torch.Tensor(states).to(device))[indices, actions]
-        q_next = self.q_next(torch.Tensor(states_).to(device)).detach().cpu().numpy()
+        q_pred = self.q_eval(states)[indices, actions]
+        q_next = self.q_next(states_)
 
-        max_actions = torch.argmax(self.q_eval(torch.Tensor(states_).to(device)), dim=1).detach().cpu().numpy()
-
+        max_actions = torch.argmax(self.q_eval(states_), dim=1)
+        # q_eval = self.q_eval(torch.Tensor(states_).to(device))[indices, actions]
         q_target = rewards + self.gamma * q_next[indices, max_actions]
 
         q_next[dones] = 0.0
         self.q_eval.optim.zero_grad()
 
-        loss = self.q_eval.crit(q_pred, torch.Tensor(q_target).to(device))
+        loss = self.q_eval.crit(q_target, q_pred)
         loss.backward()
 
         self.q_eval.optim.step()
