@@ -8,7 +8,6 @@ if __name__ == '__main__':
     n_actions = env.action_space.n
     obs_shape = list(env.observation_space.shape)
     agent = Agent(gamma = 0.99, n_actions = n_actions, epsilon = 1.0, batch_size = 64, input_dims = obs_shape)
-#    agent = Agent(lr = 5e-4, gamma = 0.99, n_actions = 4, epsilon = 1.0, batch_size = 64, input_dims = [8], mem_size = 1000000, eps_min = 0.01, eps_dec = 1e-3, replace=100)
 
     n_games = 500
     scores = []
